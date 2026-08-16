@@ -13,7 +13,7 @@ PARTY_PATTERN = re.compile(
     r"Bündnis 90/Die Grünen|Bündnis 90|"
     r"GRÜNE|Grüne|Grünen|Grüner|"
     r"Grünenfraktion|"
-    r"DIE LINKE|Die Linke|Linken|Linker|"
+    r"DIE LINKE|Die Linke|Linke|Linken|Linker|Linksfraktion"
     r"Linksfraktion|"
     r"FDP|Freie Demokraten"
     r")\b"
