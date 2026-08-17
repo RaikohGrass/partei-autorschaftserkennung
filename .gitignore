@@ -1,10 +1,12 @@
 # Original and processed datasets
 data/raw/*
+data/filtered/*
 data/processed/*
 
 # Keep directories
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/filtered/.gitkeep
 
 # Python
 __pycache__/
