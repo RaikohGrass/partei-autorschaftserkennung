@@ -1,12 +1,6 @@
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
 
-# Hier wird es entschieden, welche Wahlperiode und welche Parteien in die Analyse einbezogen werden sollen.
-# Für die Hausarbeit wurde die 19. Wahlperiode und die Parteien CDU/CSU, SPD, Bündnis 90/Die Grünen, DIE LINKE und AfD ausgewählt.
-ELECTORAL_TERM = 19
-PARTIES = ["CDU/CSU", "SPD", "Grüne", "DIE LINKE.", "AfD"]
-SPEECH_MIN_WORD_COUNT = 100
-RANDOM_SEED = 11
 
 def filter_speeches(df_speeches:pd.DataFrame, factions_ids:dict, electoral_term:int, min_words:int) -> pd.DataFrame:
     df_speeches_filtered = df_speeches[(df_speeches["faction_id"].isin(factions_ids.keys())) & (df_speeches["electoral_term"] == electoral_term)]
@@ -47,7 +41,17 @@ def proof_speaker_disjointness(df_train:pd.DataFrame, df_val:pd.DataFrame, df_te
     assert len(train_speakers.intersection(test_speakers)) == 0, "Train and Test sets have overlapping speakers."
     assert len(val_speakers.intersection(test_speakers)) == 0, "Validation and Test sets have overlapping speakers."
 
+    print("The three datasets are speaker-disjoint.")
+
 def main():
+
+    # Hier wird es entschieden, welche Wahlperiode und welche Parteien in die Analyse einbezogen werden sollen.
+    # Für die Hausarbeit wurde die 19. Wahlperiode und die Parteien CDU/CSU, SPD, Bündnis 90/Die Grünen, DIE LINKE und AfD ausgewählt.
+    ELECTORAL_TERM = 19
+    PARTIES = ["CDU/CSU", "SPD", "Grüne", "DIE LINKE.", "AfD"]
+    SPEECH_MIN_WORD_COUNT = 100
+    RANDOM_SEED = 11
+    TRAINING_SET_PERCENTAGE = 0.7
     
     df_speeches = pd.read_feather("data/raw/speeches.feather")
     df_politicians = pd.read_feather("data/raw/politicians.feather")
@@ -62,7 +66,7 @@ def main():
 
     df_politicians_filtered = df_politicians[df_politicians["id"].isin(politicians_ids)]
 
-    df_train, df_val, df_test = split_data(df_speeches_filtered, 0.7, r_seed=RANDOM_SEED)
+    df_train, df_val, df_test = split_data(df_speeches_filtered, TRAINING_SET_PERCENTAGE, r_seed=RANDOM_SEED)
 
     # folgende Aufteilung nach Fraktion ist im Datensatz enthalten:
     for name, dataset in [
@@ -73,7 +77,7 @@ def main():
         print(f"\n{name}:")
         print(dataset["faction_id"].value_counts())
 
-    # da wir nur 500 Rede pro Fraktion haben wollen, nehmen wir eine Stichprobe vom Datensatz:
+    # da wir nur 1500 Rede pro Fraktion haben wollen, nehmen wir eine Stichprobe vom Datensatz:
 
     df_train_balanced = (
         df_train

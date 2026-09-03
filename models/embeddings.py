@@ -1,6 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 
-def train_embedding_classifier(X_train_embeddings, y_train, regularization = 1.0):
+def embedding_classifier(X_train_embeddings, y_train, regularization = 1.0):
     """
     Train a logistic regression classifier on the provided embeddings and labels.
 

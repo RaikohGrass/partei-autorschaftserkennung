@@ -1,35 +1,35 @@
 import pandas as pd
 import re
 
-PARTY_PATTERN = re.compile(
-    r"\b(?:"
-    r"CDU/CSU|CDU|CSU|"
-    r"Unionsfraktion|Union|"
-    r"SPD|"
-    r"Sozialdemokrat(?:en|innen)?|"
-    r"Sozialdemokratinnen und Sozialdemokraten|"
-    r"sozialdemokratisch(?:e|en|er|es|em)?|"
-    r"AfD|Alternative für Deutschland|"
-    r"Bündnis 90/Die Grünen|Bündnis 90|"
-    r"GRÜNE|Grüne|Grünen|Grüner|"
-    r"Grünenfraktion|"
-    r"DIE LINKE|Die Linke|Linke|Linken|Linker|Linksfraktion"
-    r"Linksfraktion|"
-    r"FDP|Freie Demokraten"
-    r")\b"
-)
-
-def mask_party_names(text, party_pattern=PARTY_PATTERN) -> str:
+def mask_party_names(text, party_pattern) -> str:
     return party_pattern.sub("[PARTY]", text)
 
 def main():
+
+    PARTY_PATTERN = re.compile(
+        r"\b(?:"
+        r"CDU/CSU|CDU|CSU|"
+        r"Unionsfraktion|Union|"
+        r"SPD|"
+        r"Sozialdemokrat(?:en|innen)?|"
+        r"Sozialdemokratinnen und Sozialdemokraten|"
+        r"sozialdemokratisch(?:e|en|er|es|em)?|"
+        r"AfD|Alternative für Deutschland|"
+        r"Bündnis 90/Die Grünen|Bündnis 90|"
+        r"GRÜNE|Grüne|Grünen|Grüner|"
+        r"Grünenfraktion|"
+        r"DIE LINKE|Die Linke|Linke|Linken|Linker|Linksfraktion"
+        r"Linksfraktion|"
+        r"FDP|Freie Demokraten"
+        r")\b"
+    )
     
     df_train = pd.read_feather("data/filtered/train.feather")
     df_val = pd.read_feather("data/filtered/val.feather")
     df_test = pd.read_feather("data/filtered/test.feather")
 
     for dataset in [df_train, df_val, df_test]:
-        dataset["masked_speech"] = (dataset["speech_content"].str.replace("\xa0", " ", regex=False).apply(mask_party_names))
+        dataset["masked_speech"] = (dataset["speech_content"].str.replace("\xa0", " ", regex=False).apply(mask_party_names, party_pattern=PARTY_PATTERN))
 
     df_train.to_parquet("data/processed/train.parquet")
     df_val.to_parquet("data/processed/val.parquet")

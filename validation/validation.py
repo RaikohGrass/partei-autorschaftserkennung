@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, f1_score, classification_report, ConfusionMatrixDisplay
 from models.baseline import baseline_model
 from models.ngram import ngram_model
-from models.embeddings import train_embedding_classifier
+from models.embeddings import embedding_classifier
 
 df_train = pd.read_parquet("data/processed/train.parquet")
 df_validation = pd.read_parquet("data/processed/val.parquet")
@@ -29,7 +29,7 @@ X_test_embeddings = np.load("data/embeddings/test_embeddings_token.npy")
 
 dummy = baseline_model(X_train, y_train)
 ngram = ngram_model(X_train, y_train)
-embedding_classifier = train_embedding_classifier(X_train_embeddings, y_train, regularization=100.0)
+embedding_classifier = embedding_classifier(X_train_embeddings, y_train, regularization=100.0)
 
 
 embedding_predictions = embedding_classifier.predict(X_validation_embeddings)
@@ -67,7 +67,7 @@ for c_value in [0.01, 0.1, 1, 10, 100]:
     #     random_state=42
     # )
 
-    classifier = train_embedding_classifier(X_train_embeddings, y_train, regularization=c_value)
+    classifier = embedding_classifier(X_train_embeddings, y_train, regularization=c_value)
 
     predictions = classifier.predict(
         X_validation_embeddings
