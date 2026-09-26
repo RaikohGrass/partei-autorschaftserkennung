@@ -23,9 +23,9 @@ y_validation = df_validation["faction_id"]
 X_test = df_test["masked_speech"]
 y_test = df_test["faction_id"]   
 
-X_train_embeddings = np.load("data/embeddings/train_embeddings_token.npy")
-X_validation_embeddings = np.load("data/embeddings/val_embeddings_token.npy")
-X_test_embeddings = np.load("data/embeddings/test_embeddings_token.npy")
+X_train_embeddings = np.load("data/embeddings/train_embeddings.npy")
+X_validation_embeddings = np.load("data/embeddings/val_embeddings.npy")
+X_test_embeddings = np.load("data/embeddings/test_embeddings.npy")
 
 dummy = baseline_model(X_train, y_train)
 ngram = ngram_model(X_train, y_train)
@@ -56,6 +56,45 @@ print("embedding Validation accuracy:",accuracy_score(y_validation, embedding_pr
 print("dummy Validation F1 score:",f1_score(y_validation, dummy_predictions, average="weighted"))
 print("ngram Validation F1 score:",f1_score(y_validation, ngram_predictions, average="weighted"))
 print("embedding Validation F1 score:",f1_score(y_validation, embedding_predictions, average="weighted"))
+
+
+
+dummy_test_predictions = dummy.predict(X_test)
+ngram_test_predictions = ngram.predict(X_test)
+embedding_test_predictions = embedding_classifier.predict(X_test_embeddings)
+
+print("dummy Test accuracy:",accuracy_score(y_test, dummy_test_predictions))
+print("ngram Test accuracy:",accuracy_score(y_test, ngram_test_predictions))
+print("embedding Test accuracy:",accuracy_score(y_test, embedding_test_predictions))
+
+print("dummy Test F1 score:",f1_score(y_test, dummy_test_predictions, average="macro"))
+print("ngram Test F1 score:",f1_score(y_test, ngram_test_predictions, average="macro"))
+print("embedding Test F1 score:",f1_score(y_test, embedding_test_predictions, average="macro"))
+
+
+classes = sorted(df_train["faction_id"].unique())
+
+ngram_f1_per_class = f1_score(
+    y_test,
+    ngram_test_predictions,
+    labels=classes,
+    average=None,
+    zero_division=0,
+)
+
+embeddings_f1_per_class = f1_score(
+    y_test,
+    embedding_test_predictions,
+    labels=classes,
+    average=None,
+    zero_division=0,
+)
+
+for faction, score in zip(classes, ngram_f1_per_class):
+    print(f"{faction}: {score:.3f}")
+
+for faction, score in zip(classes, embeddings_f1_per_class):
+    print(f"{faction}: {score:.3f}")
 
 
 embedding_results = []
@@ -97,8 +136,19 @@ print(
 )
 
 ConfusionMatrixDisplay.from_predictions(
-    y_validation,
-    ngram_predictions,
+    y_test,
+    ngram_test_predictions,
+    normalize="true",
+    cmap="Blues",
+    xticks_rotation=45
+)
+
+plt.tight_layout()
+plt.show()
+
+ConfusionMatrixDisplay.from_predictions(
+    y_test,
+    embedding_test_predictions,
     normalize="true",
     cmap="Blues",
     xticks_rotation=45
