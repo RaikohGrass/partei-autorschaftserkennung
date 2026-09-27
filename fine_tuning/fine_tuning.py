@@ -105,11 +105,14 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 train_chunks = dataframe_to_chunks(df_train)
 validation_chunks = dataframe_to_chunks(df_val)
+test_chunks = dataframe_to_chunks(df_test)
 
 print("Training speeches:", len(df_train))
 print("Training chunks:", len(train_chunks))
 print("Validation speeches:", len(df_val))
 print("Validation chunks:", len(validation_chunks))
+print("Test speeches:", len(df_test))
+print("Test chunks:", len(test_chunks))
 
 assert train_chunks.groupby("speech_id").size().max() <= 3
 assert validation_chunks.groupby("speech_id").size().max() <= 3
@@ -120,6 +123,7 @@ assert validation_chunks["input_ids"].map(len).max() <= MAX_LENGTH
 
 training_speech_ids = train_chunks["speech_id"].to_numpy()
 validation_speech_ids = validation_chunks["speech_id"].to_numpy()
+test_speech_ids = test_chunks["speech_id"].to_numpy()
 
 train_dataset = Dataset.from_pandas(
     train_chunks.drop(columns=["speech_id", "chunk_number"]),
@@ -131,8 +135,15 @@ validation_dataset = Dataset.from_pandas(
     preserve_index=False,
 )
 
+test_dataset = Dataset.from_pandas(
+    test_chunks.drop(columns=["speech_id", "chunk_number"]),
+    preserve_index=False,
+)
+
+
 print(train_dataset)
 print(validation_dataset)
+print(test_dataset)
 
 data_collator = DataCollatorWithPadding(
     tokenizer=tokenizer
@@ -140,6 +151,7 @@ data_collator = DataCollatorWithPadding(
 
 print(train_dataset)
 print(validation_dataset)
+print(test_dataset)
 
 model = AutoModelForSequenceClassification.from_pretrained(
     MODEL_NAME,
@@ -217,6 +229,59 @@ speech_logits = (
 
 y_pred = speech_logits.to_numpy().argmax(axis=1)
 
+
+test_prediction_output = trainer.predict(test_dataset)
+test_chunk_logits = test_prediction_output.predictions
+
+test_logits_df = pd.DataFrame(
+    test_chunk_logits,
+    columns=logit_columns,
+)
+
+test_logits_df["speech_id"] = test_speech_ids
+
+test_speech_logits = (
+    test_logits_df
+    .groupby("speech_id")[logit_columns]
+    .mean()
+    .sort_index()
+)
+
+y_test_pred = test_speech_logits.to_numpy().argmax(axis=1)
+
+y_test_true = (
+    df_test
+    .reset_index(drop=True)[LABEL_COL]
+    .map(label2id)
+    .to_numpy()
+)
+
+test_accuracy = accuracy_score(y_test_true, y_test_pred)
+
+
+test_macro_f1 = f1_score(
+    y_test_true,
+    y_test_pred,
+    average="macro",
+)
+
+print("Transformer test accuracy:", test_accuracy)
+print("Transformer test macro-F1:", test_macro_f1)
+
+
+gbert_f1_per_class = f1_score(
+    y_test_true,
+    y_test_pred,
+    labels=range(len(classes)),
+    average=None,
+    zero_division=0,
+)
+
+for faction, score in zip(classes, gbert_f1_per_class):
+    print(f"Transformer test F1 for {faction}: {score:.3f}")
+
+
+
 y_true = (
     df_val
     .reset_index(drop=True)[LABEL_COL]
@@ -264,6 +329,36 @@ cm_normalized = confusion_matrix(
     labels=range(len(classes)),
     normalize="true",
 )
+
+from sklearn.metrics import ConfusionMatrixDisplay
+ConfusionMatrixDisplay.from_predictions(
+    y_test_true,
+    y_test_pred,
+    labels=range(len(classes)),
+    display_labels=classes,
+    cmap="Blues",
+    xticks_rotation=45,
+    normalize="true",
+)
+
+plt.tight_layout()
+plt.show()
+
+ConfusionMatrixDisplay.from_predictions(
+    y_true,
+    y_pred,
+    labels=range(len(classes)),
+    display_labels=classes,
+    cmap="Blues",
+    xticks_rotation=45,
+    normalize="true",
+)
+
+plt.tight_layout()
+plt.show()
+
+
+
 
 fig, axes = plt.subplots(1, 2, figsize=(15, 6))
 
@@ -327,24 +422,24 @@ print(
     / chunk_distribution.sum()
 )
 
-validation_results = pd.DataFrame({
-    "speech_id": np.arange(len(y_true)),
-    "true_id": y_true,
-    "predicted_id": y_pred,
+test_results = pd.DataFrame({
+    "speech_id": np.arange(len(y_test_true)),
+    "true_id": y_test_true,
+    "predicted_id": y_test_pred,
 })
 
 
-validation_results["true_faction"] = (
-    validation_results["true_id"].map(id2label)
+test_results["true_faction"] = (
+    test_results["true_id"].map(id2label)
 )
 
-validation_results["predicted_faction"] = (
-    validation_results["predicted_id"].map(id2label)
+test_results["predicted_faction"] = (
+    test_results["predicted_id"].map(id2label)
 )
 
-validation_results["masked_speech"]=df_val["masked_speech"]
+test_results["masked_speech"]=df_test["masked_speech"]
 
-linke_as_green = validation_results[(validation_results["true_faction"]=="DIE LINKE.") & (validation_results["predicted_faction"]=="Grüne")]
+linke_as_green = test_results[(test_results["true_faction"]=="DIE LINKE.") & (test_results["predicted_faction"]=="Grüne")]
 
 climate_terms = [
     "klimaschutz",
@@ -357,6 +452,6 @@ climate_terms = [
     "koh",
 ]
 
-def contains_climate_term(text):
+def contains_climate_term(text, climate_terms=climate_terms):
     text = str(text).lower()
     return any(term in text for term in climate_terms)
