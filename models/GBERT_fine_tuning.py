@@ -32,18 +32,10 @@ TEXT_COL = "masked_speech"
 
 
 def select_evenly(items, maximum):
-    """
-    Select up to `maximum` items distributed across the complete list.
-    """
     if len(items) <= maximum:
         return items
 
-    positions = np.linspace(
-        0,
-        len(items) - 1,
-        num=maximum,
-        dtype=int,
-    )
+    positions = np.linspace(0, len(items) - 1, num=maximum, dtype=int)
 
     return [items[position] for position in positions]
 
@@ -52,19 +44,13 @@ def dataframe_to_chunks(df):
     df = df.reset_index(drop=True).copy()
 
     chunk_rows = []
-    max_content_length = MAX_LENGTH - tokenizer.num_special_tokens_to_add(
-        pair=False
-    )
+    max_content_length = MAX_LENGTH - tokenizer.num_special_tokens_to_add(pair=False)
 
     for speech_id, row in df.iterrows():
         text = str(row[TEXT_COL])
         label = label2id[row[LABEL_COL]]
 
-        token_ids = tokenizer(
-            text,
-            add_special_tokens=False,
-            truncation=False,
-        )["input_ids"]
+        token_ids = tokenizer(text, add_special_tokens=False, truncation=False)["input_ids"]
 
         chunks = []
 
@@ -72,14 +58,7 @@ def dataframe_to_chunks(df):
         while start < len(token_ids):
             chunk = token_ids[start:start + max_content_length]
 
-            chunks.append(
-                tokenizer.prepare_for_model(
-                    chunk,
-                    add_special_tokens=True,
-                    truncation=True,
-                    max_length=MAX_LENGTH,
-                )
-            )
+            chunks.append(tokenizer.prepare_for_model(chunk, add_special_tokens=True, truncation=True, max_length=MAX_LENGTH))
 
             if start + max_content_length >= len(token_ids):
                 break
