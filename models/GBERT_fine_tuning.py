@@ -1,16 +1,12 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from datasets import Dataset
 from transformers import DataCollatorWithPadding
-
-
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    classification_report,
-)
+from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, f1_score, ConfusionMatrixDisplay
 
 MODEL_NAME = "deepset/gbert-base"
 
@@ -279,50 +275,6 @@ validation_macro_f1 = f1_score(
 print("Transformer validation accuracy:", validation_accuracy)
 print("Transformer validation macro-F1:", validation_macro_f1)
 
-print(
-    classification_report(
-        y_true,
-        y_pred,
-        labels=range(len(classes)),
-        target_names=classes,
-        digits=3,
-        zero_division=0,
-    )
-)
-
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from sklearn.metrics import confusion_matrix
-
-cm = confusion_matrix(
-    y_true,
-    y_pred,
-    labels=range(len(classes)),
-)
-
-cm_normalized = confusion_matrix(
-    y_true,
-    y_pred,
-    labels=range(len(classes)),
-    normalize="true",
-)
-
-from sklearn.metrics import ConfusionMatrixDisplay
-ConfusionMatrixDisplay.from_predictions(
-    y_test_true,
-    y_test_pred,
-    labels=range(len(classes)),
-    display_labels=classes,
-    cmap="Blues",
-    xticks_rotation=45,
-    normalize="true",
-)
-
-plt.tight_layout()
-plt.show()
-
 ConfusionMatrixDisplay.from_predictions(
     y_true,
     y_pred,
@@ -335,102 +287,3 @@ ConfusionMatrixDisplay.from_predictions(
 
 plt.tight_layout()
 plt.show()
-
-
-
-
-fig, axes = plt.subplots(1, 2, figsize=(15, 6))
-
-sns.heatmap(
-    cm,
-    annot=True,
-    fmt="d",
-    cmap="Blues",
-    xticklabels=classes,
-    yticklabels=classes,
-    ax=axes[0],
-)
-
-axes[0].set_title("GBERT: absolute counts")
-axes[0].set_xlabel("Predicted faction")
-axes[0].set_ylabel("True faction")
-
-sns.heatmap(
-    cm_normalized,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=classes,
-    yticklabels=classes,
-    ax=axes[1],
-)
-
-axes[1].set_title("GBERT: row-normalized")
-axes[1].set_xlabel("Predicted faction")
-axes[1].set_ylabel("True faction")
-
-plt.tight_layout()
-plt.show()
-
-print("True distribution:")
-print(
-    pd.Series(y_true)
-    .map(id2label)
-    .value_counts()
-)
-
-print("\nPredicted distribution:")
-print(
-    pd.Series(y_pred)
-    .map(id2label)
-    .value_counts()
-)
-
-
-chunk_distribution = (
-    train_chunks["labels"]
-    .value_counts()
-    .sort_index()
-    .rename(index=id2label)
-)
-
-print(chunk_distribution)
-
-print(
-    chunk_distribution
-    / chunk_distribution.sum()
-)
-
-test_results = pd.DataFrame({
-    "speech_id": np.arange(len(y_test_true)),
-    "true_id": y_test_true,
-    "predicted_id": y_test_pred,
-})
-
-
-test_results["true_faction"] = (
-    test_results["true_id"].map(id2label)
-)
-
-test_results["predicted_faction"] = (
-    test_results["predicted_id"].map(id2label)
-)
-
-test_results["masked_speech"]=df_test["masked_speech"]
-
-linke_as_green = test_results[(test_results["true_faction"]=="DIE LINKE.") & (test_results["predicted_faction"]=="Grüne")]
-
-climate_terms = [
-    "klimaschutz",
-    "klimapolitik",
-    "klimakrise",
-    "klimawandel",
-    "emission",
-    "co2",
-    "erneuerbare",
-    "koh",
-]
-
-def contains_climate_term(text, climate_terms=climate_terms):
-    text = str(text).lower()
-    return any(term in text for term in climate_terms)

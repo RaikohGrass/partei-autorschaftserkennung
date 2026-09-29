@@ -37,13 +37,13 @@ Die erste Möglichkeit zur Erkundung der geleisteten Arbeit ist eine Reihe von e
     1. baseline.py
     2. ngram.py
     3. embeddings.py
-    4. GBERT_fine_tuning.py
+    4. GBERT_fine_tuning.py (nur mit GPU auszuführen)
 3. Auswertung der Modelle (***./validation/***)
     1. embeddings_regularization.py
     2. validation.py
     3. features_analyse.py
     4. evaluation.py
-    5. GBERT_evaluation.py
+    5. GBERT_evaluation.py (nur mit GPU auszuführen)
 
 ### Jupyter Notebook
 
