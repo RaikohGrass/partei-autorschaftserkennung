@@ -1,9 +1,3 @@
---extra-index-url https://download.pytorch.org/whl/cu128
-
-torch                           == 2.11.0+cu128
-torchaudio                      == 2.11.0+cu128
-torchvision                     == 0.26.0+cu128
-
 accelerate                      == 1.14.0
 datasets                        == 5.0.1
 numpy                           == 2.5.0

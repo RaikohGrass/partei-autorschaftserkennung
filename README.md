@@ -39,8 +39,11 @@ Die erste Möglichkeit zur Erkundung der geleisteten Arbeit ist eine Reihe von e
     3. embeddings.py
     4. GBERT_fine_tuning.py
 3. Auswertung der Modelle (***./validation/***)
-    1. validation.py
-    2. merkmalanalyse.py
+    1. embeddings_regularization.py
+    2. validation.py
+    3. features_analyse.py
+    4. evaluation.py
+    5. GBERT_evaluation.py
 
 ### Jupyter Notebook
 
